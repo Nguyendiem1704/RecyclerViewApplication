@@ -25,6 +25,18 @@
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="#222222"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:id="@+id/tvStorePhone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="012-345-6789"
+        android:textSize="18sp"
+        android:textColor="#1E88E5"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="12dp"
         android:layout_marginBottom="32dp" />
 
     <Button
@@ -37,4 +49,5 @@
         android:textColor="#FFFFFF"
         android:padding="12dp"
         android:elevation="4dp" />
+
 </LinearLayout>

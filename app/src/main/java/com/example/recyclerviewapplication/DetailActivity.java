@@ -1,6 +1,9 @@
 package com.example.recyclerviewapplication;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -34,6 +37,18 @@ public class DetailActivity extends AppCompatActivity {
 
         btnAddToCart.setOnClickListener(v -> {
             Toast.makeText(this, "Added to cart: " + product.name, Toast.LENGTH_SHORT).show();
+        });
+
+        TextView tvStorePhone = findViewById(R.id.tvStorePhone);
+
+        tvStorePhone.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String phoneNumber = tvStorePhone.getText().toString();
+                Intent intent = new Intent(Intent.ACTION_DIAL);
+                intent.setData(Uri.parse("tel:" + phoneNumber));
+                startActivity(intent);
+            }
         });
     }
 }
