@@ -41,8 +41,6 @@
 
             </androidx.appcompat.widget.Toolbar>
 
-
-
             <LinearLayout
                 android:id="@+id/headerSection"
                 android:layout_width="match_parent"
@@ -87,7 +85,9 @@
                     android:textColor="#FFFFFF"
                     android:textSize="16sp"
                     android:padding="8dp" />
+
             </LinearLayout>
+
         </com.google.android.material.appbar.AppBarLayout>
 
         <androidx.recyclerview.widget.RecyclerView

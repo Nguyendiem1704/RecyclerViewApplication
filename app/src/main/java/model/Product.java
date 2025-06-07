@@ -9,7 +9,6 @@ import java.util.List;
 public class Product implements Serializable {
     public String name;
     public int iconResId;
-
     public Product(String name, int iconResId) {
         this.name = name;
         this.iconResId = iconResId;

@@ -1,27 +1,51 @@
 package com.example.recyclerviewapplication;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
 import adapter.ProductAdapter;
+import model.CartManager;
 import model.Product;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String CHANNEL_ID = "cart_channel_id";
+    private static final int NOTIFICATION_ID = 1;
+
     private RecyclerView recyclerView;
     private ProductAdapter adapter;
+
+    private BroadcastReceiver cartCountReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            invalidateOptionsMenu();
+            showAddToCartNotification();
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
+
 
         ImageView icMenu = findViewById(R.id.ic_menu);
         icMenu.setOnClickListener(view -> {
@@ -58,10 +83,10 @@ public class MainActivity extends AppCompatActivity {
                 int id = item.getItemId();
                 if (id == R.id.menu_search) {
                     Toast.makeText(MainActivity.this, "Search clicked", Toast.LENGTH_SHORT).show();
-                    // startActivity(new Intent(MainActivity.this, SearchActivity.class));
                     return true;
                 } else if (id == R.id.menu_cart) {
-                    Toast.makeText(MainActivity.this, "Cart clicked", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(MainActivity.this, CartActivity.class);
+                    startActivity(intent);
                     return true;
                 } else if (id == R.id.menu_profile) {
                     Toast.makeText(MainActivity.this, "Profile clicked", Toast.LENGTH_SHORT).show();
@@ -90,8 +115,43 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        LocalBroadcastManager.getInstance(this)
+                .registerReceiver(cartCountReceiver, new IntentFilter("UPDATE_CART_COUNT"));
+        invalidateOptionsMenu();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(cartCountReceiver);
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.top_menu, menu);
+
+        MenuItem menuItem = menu.findItem(R.id.action_cart);
+
+        FrameLayout cartActionView = (FrameLayout) menuItem.getActionView();
+        ImageView icCart = cartActionView.findViewById(R.id.ic_cart);
+        TextView tvCartCount = cartActionView.findViewById(R.id.tvCartCount);
+
+        int count = CartManager.getInstance().getCartSize();
+        tvCartCount.setText(String.valueOf(count));
+        tvCartCount.setVisibility(count > 0 ? TextView.VISIBLE : TextView.GONE);
+
+        icCart.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, CartActivity.class);
+            startActivity(intent);
+        });
+
+        cartActionView.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, CartActivity.class);
+            startActivity(intent);
+        });
+
         return true;
     }
 
@@ -102,9 +162,39 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Toolbar Search clicked", Toast.LENGTH_SHORT).show();
             return true;
         } else if (id == R.id.action_cart) {
-            Toast.makeText(this, "Toolbar Cart clicked", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(MainActivity.this, CartActivity.class);
+            startActivity(intent);
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void showAddToCartNotification() {
+        NotificationManager notificationManager =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Cart Notifications",
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        Intent intent = new Intent(this, CartActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
+                PendingIntent.FLAG_IMMUTABLE);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_cart)
+                .setContentTitle("Shopping Cart")
+                .setContentText("You have added 1 item to your cart")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true);
+        notificationManager.cancel(NOTIFICATION_ID);
+        notificationManager.notify(NOTIFICATION_ID, builder.build());
     }
 }
