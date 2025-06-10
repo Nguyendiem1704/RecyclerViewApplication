@@ -44,5 +44,38 @@
             android:ellipsize="end"
             android:breakStrategy="simple"
             android:hyphenationFrequency="normal" />
+
+        <TextView
+            android:id="@+id/productDesc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Description of the product"
+            android:textAlignment="center"
+            android:textSize="14sp"
+            android:textColor="#555555"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:id="@+id/productPrice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Price: $0.00"
+            android:textAlignment="center"
+            android:textSize="16sp"
+            android:textColor="#009688"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:id="@+id/productStock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Stock: 0"
+            android:textAlignment="center"
+            android:textSize="14sp"
+            android:textColor="#F44336"
+            android:layout_marginTop="4dp" />
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>

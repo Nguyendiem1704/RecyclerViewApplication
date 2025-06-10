@@ -27,8 +27,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 
 import adapter.ProductAdapter;
+import database.ProductDAO;
 import model.CartManager;
 import model.Product;
+import session.SessionManager;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private ProductAdapter adapter;
+    private ProductDAO productDAO;
 
     private BroadcastReceiver cartCountReceiver = new BroadcastReceiver() {
         @Override
@@ -46,22 +49,45 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Khởi tạo SessionManager
+        sessionManager = new SessionManager(MainActivity.this);
+
+        // Nếu chưa login thì chuyển về LoginActivity
+        if (!sessionManager.isLoggedIn()) {
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_home);
 
+        // Setup Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
+        // Hiển thị "Welcome, user"
+        TextView toolbarTitle = findViewById(R.id.toolbar_title);
+        String username = sessionManager.getUsername();
+        toolbarTitle.setText("Welcome, " + username + "!");
 
+        // Khởi tạo ProductDAO
+        productDAO = new ProductDAO(this);
+
+        // Xử lý PopupMenu (menu 3 chấm)
         ImageView icMenu = findViewById(R.id.ic_menu);
         icMenu.setOnClickListener(view -> {
             PopupMenu popupMenu = new PopupMenu(MainActivity.this, view);
             popupMenu.getMenuInflater().inflate(R.menu.popup_menu, popupMenu.getMenu());
 
+            // Hiển thị icon trong menu
             try {
                 java.lang.reflect.Field[] fields = popupMenu.getClass().getDeclaredFields();
                 for (java.lang.reflect.Field field : fields) {
@@ -79,20 +105,29 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
+            // Xử lý click các item trong menu
             popupMenu.setOnMenuItemClickListener(item -> {
                 int id = item.getItemId();
-                if (id == R.id.menu_search) {
-                    Toast.makeText(MainActivity.this, "Search clicked", Toast.LENGTH_SHORT).show();
+                if (id == R.id.menu_insert) {
+                    Intent intent = new Intent(MainActivity.this, InsertProductActivity.class);
+                    startActivity(intent);
                     return true;
-                } else if (id == R.id.menu_cart) {
-                    Intent intent = new Intent(MainActivity.this, CartActivity.class);
+                } else if (id == R.id.menu_update) {
+                    Intent intent = new Intent(MainActivity.this, UpdateProductActivity.class);
+                    startActivity(intent);
+                    return true;
+                } else if (id == R.id.menu_delete) {
+                    Intent intent = new Intent(MainActivity.this, DeleteProductActivity.class);
                     startActivity(intent);
                     return true;
                 } else if (id == R.id.menu_profile) {
                     Toast.makeText(MainActivity.this, "Profile clicked", Toast.LENGTH_SHORT).show();
                     return true;
-                } else if (id == R.id.menu_settings) {
-                    Toast.makeText(MainActivity.this, "Settings clicked", Toast.LENGTH_SHORT).show();
+                } else if (id == R.id.menu_logout) {
+                    sessionManager.logout();
+                    Intent intentLogout = new Intent(MainActivity.this, LoginActivity.class);
+                    startActivity(intentLogout);
+                    finish();
                     return true;
                 }
                 return false;
@@ -101,17 +136,12 @@ public class MainActivity extends AppCompatActivity {
             popupMenu.show();
         });
 
+        // Setup RecyclerView
         recyclerView = findViewById(R.id.recyclerView);
         recyclerView.setLayoutManager(new GridLayoutManager(this, 3));
 
-        List<Product> products = Product.getSampleProducts();
-
-        adapter = new ProductAdapter(products, product -> {
-            Intent intent = new Intent(MainActivity.this, DetailActivity.class);
-            intent.putExtra("product", product);
-            startActivity(intent);
-        });
-        recyclerView.setAdapter(adapter);
+        // Load dữ liệu từ database lần đầu
+        loadProductsFromDatabase();
     }
 
     @Override
@@ -120,6 +150,9 @@ public class MainActivity extends AppCompatActivity {
         LocalBroadcastManager.getInstance(this)
                 .registerReceiver(cartCountReceiver, new IntentFilter("UPDATE_CART_COUNT"));
         invalidateOptionsMenu();
+
+        // Load lại sản phẩm mỗi lần quay về
+        loadProductsFromDatabase();
     }
 
     @Override
@@ -196,5 +229,18 @@ public class MainActivity extends AppCompatActivity {
                 .setAutoCancel(true);
         notificationManager.cancel(NOTIFICATION_ID);
         notificationManager.notify(NOTIFICATION_ID, builder.build());
+    }
+
+    // Load sản phẩm từ database
+    private void loadProductsFromDatabase() {
+        List<Product> products = productDAO.getAllProducts();
+
+        adapter = new ProductAdapter(products, product -> {
+            Intent intent = new Intent(MainActivity.this, DetailActivity.class);
+            intent.putExtra("product", product);
+            startActivity(intent);
+        });
+
+        recyclerView.setAdapter(adapter);
     }
 }

@@ -17,7 +17,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import model.CartManager;
 import model.Product;
@@ -25,16 +24,13 @@ import model.Product;
 public class DetailActivity extends AppCompatActivity {
 
     private ImageView productDetailImage;
-    private TextView productDetailName;
-    private Button btnAddToCart;
+    private TextView productDetailName, productDetailDesc, productDetailPrice, productDetailStock;
     private TextView tvStorePhone;
+    private Button btnAddToCart;
     private Product product;
-
 
     public static final String CHANNEL_ID = "cart_notification_channel";
     public static final int NOTIFICATION_ID = 1001;
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,39 +40,47 @@ public class DetailActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbarDetail);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setDisplayShowTitleEnabled(true);
-        product = (Product) getIntent().getSerializableExtra("product");
-        if (product != null) {
-            getSupportActionBar().setTitle(product.name);
-        }
 
-        toolbar.setNavigationOnClickListener(v -> {
-            finish();
-        });
+        toolbar.setNavigationOnClickListener(v -> finish());
 
+        // Ánh xạ view
         productDetailImage = findViewById(R.id.productDetailImage);
         productDetailName = findViewById(R.id.productDetailName);
+        productDetailDesc = findViewById(R.id.productDetailDesc);
+        productDetailPrice = findViewById(R.id.productDetailPrice);
+        productDetailStock = findViewById(R.id.productDetailStock);
         btnAddToCart = findViewById(R.id.btnAddToCart);
         tvStorePhone = findViewById(R.id.tvStorePhone);
 
-        Product product = (Product) getIntent().getSerializableExtra("product");
+        product = (Product) getIntent().getSerializableExtra("product");
 
         if (product != null) {
-            productDetailName.setText(product.name);
-            productDetailImage.setImageResource(product.iconResId);
+            getSupportActionBar().setTitle(product.getName());
+
+            productDetailName.setText(product.getName());
+            productDetailDesc.setText(product.getDescript());
+            productDetailPrice.setText("Price: $" + product.getPrice());
+            productDetailStock.setText("Stock: " + product.getStock());
+
+            // Load image từ drawable
+            int resId = getResources().getIdentifier(product.getImg(), "drawable", getPackageName());
+            if (resId != 0) {
+                productDetailImage.setImageResource(resId);
+            } else {
+                productDetailImage.setImageResource(R.drawable.placeholder); // fallback nếu không tìm thấy ảnh
+            }
         }
 
         btnAddToCart.setOnClickListener(v -> {
             if (product != null) {
                 CartManager.getInstance().addProduct(product, this);
-                showAddToCartNotification(product.name);
+                showAddToCartNotification(product.getName());
             }
         });
 
         tvStorePhone.setOnClickListener(v -> {
             String phoneNumber = tvStorePhone.getText().toString();
-            Intent intent = new Intent(Intent.ACTION_DIAL);
-            intent.setData(Uri.parse("tel:" + phoneNumber));
+            Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phoneNumber));
             startActivity(intent);
         });
 
@@ -85,12 +89,12 @@ public class DetailActivity extends AppCompatActivity {
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = "Cart Notifications";
-            String description = "Notifications to remind user about products in cart";
-            int importance = NotificationManager.IMPORTANCE_DEFAULT;
-            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
-            channel.setDescription(description);
-
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    "Cart Notifications",
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            channel.setDescription("Notifications for cart events");
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
             if (notificationManager != null) {
                 notificationManager.createNotificationChannel(channel);
@@ -101,24 +105,28 @@ public class DetailActivity extends AppCompatActivity {
     private void showAddToCartNotification(String productName) {
         Intent intent = new Intent(this, CartActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_cart)
                 .setContentTitle("Shopping Cart")
-                .setContentText("You have added 1 item to your cart: " + productName)
+                .setContentText("You added 1 item: " + productName)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true);
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
-                return;
-            }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 101);
+            return;
         }
 
         notificationManager.notify(NOTIFICATION_ID, builder.build());

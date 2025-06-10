@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.recyclerviewapplication.R;
 
 import java.util.List;
@@ -33,8 +34,16 @@ public class CartAdapter extends RecyclerView.Adapter<CartAdapter.CartViewHolder
     @Override
     public void onBindViewHolder(@NonNull CartViewHolder holder, int position) {
         Product product = cartProducts.get(position);
-        holder.tvProductName.setText(product.name);
-        holder.imgProduct.setImageResource(product.iconResId);
+        holder.tvProductName.setText(product.getName());
+
+        int resId = holder.itemView.getContext().getResources()
+                .getIdentifier(product.getImg(), "drawable", holder.itemView.getContext().getPackageName());
+
+        if (resId != 0) {
+            holder.imgProduct.setImageResource(resId);
+        } else {
+            holder.imgProduct.setImageResource(R.drawable.placeholder);
+        }
     }
 
     @Override

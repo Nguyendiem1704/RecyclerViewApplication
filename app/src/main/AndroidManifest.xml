@@ -24,6 +24,11 @@
         </activity>
         <activity android:name=".DetailActivity" />
         <activity android:name=".CartActivity" />
+        <activity android:name=".LoginActivity" />
+        <activity android:name=".InsertProductActivity"/>
+        <activity android:name=".UpdateProductActivity"/>
+        <activity android:name=".DeleteProductActivity"/>
+
     </application>
 
 </manifest>

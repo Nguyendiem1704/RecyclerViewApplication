@@ -1,7 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/menu_search" android:title="Search" android:icon="@drawable/ic_search" />
-    <item android:id="@+id/menu_cart" android:title="Cart" android:icon="@drawable/ic_cart" />
-    <item android:id="@+id/menu_profile" android:title="Profile" android:icon="@drawable/ic_profile" />
-    <item android:id="@+id/menu_settings" android:title="Settings" android:icon="@drawable/ic_settings" />
+
+    <item
+        android:id="@+id/menu_insert"
+        android:title="Insert"
+        android:icon="@drawable/ic_add" />
+
+    <item
+        android:id="@+id/menu_update"
+        android:title="Update"
+        android:icon="@drawable/ic_edit" />
+
+    <item
+        android:id="@+id/menu_delete"
+        android:title="Delete"
+        android:icon="@drawable/ic_delete" />
+
+    <item
+        android:id="@+id/menu_profile"
+        android:title="Profile"
+        android:icon="@drawable/ic_profile" />
+
+    <item
+        android:id="@+id/menu_logout"
+        android:title="Logout"
+        android:icon="@drawable/ic_logout" />
 </menu>
